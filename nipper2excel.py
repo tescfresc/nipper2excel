@@ -84,7 +84,7 @@ for i,row in enumerate(issues[2]):
     items = row.find_all("item")
 
     title = items[1].text
-    sheet = wb.create_sheet(title)
+    sheet = wb.create_sheet(title[:30])
 
     sheet.cell(row=1, column=1, value="Title").font = headingfont
     sheet.cell(row=2, column=1, value=title)
