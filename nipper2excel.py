@@ -67,17 +67,15 @@ write_to_sheet(mainws, mainws.max_row , 1, get_table_values("SCOPE.AUDITDEVICELI
 write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("SECURITY.SUMMARY.SECURITYAUDIT.RISKPROFILE", 0), "Risk Profile")
 #summary each device
 write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("SECURITY.SUMMARY.AUDITDEVICELIST", 0), "Summary of findings for each device")
-#vulnerability audit each device        
-write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("VULN.SUMMARY.AUDITRESULTLIST", 0), "Summary of findings from the Vulnerability Audit for each device")
-#security findings summary table
-#write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("SECURITY.FINDINGS.SUMMARY.TABLE", 0), "Findings summary table")
+#vulnerability audit each device
+if len(soup.find_all("table", {"ref":"VULN.SUMMARY.AUDITRESULTLIST"})) > 0:
+    write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("VULN.SUMMARY.AUDITRESULTLIST", 0), "Summary of findings from the Vulnerability Audit for each device")
+    vulnsheet = wb.create_sheet("Vulnerability Audit")
+    write_to_sheet(vulnsheet, 1 , 1, get_table_values("VULNAUDIT.CONCLUSIONS", 0), "Vulnerability Conclusion")
+    for x in range(1, len(soup.find_all("table", {"ref":"VULNAUDIT.CONCLUSIONS"}))):
+        write_to_sheet(vulnsheet, vulnsheet.max_row + 2 , 1, get_table_values("VULNAUDIT.CONCLUSIONS", x), "Vulnerability List")
+    fix_column_width(vulnsheet)
 
-
-#vuln sheet
-vulnsheet = wb.create_sheet("Vulnerability Audit")
-write_to_sheet(vulnsheet, 1 , 1, get_table_values("VULNAUDIT.CONCLUSIONS", 0), "Vulnerability Conclusion")
-for x in range(1, len(soup.find_all("table", {"ref":"VULNAUDIT.CONCLUSIONS"}))):
-    write_to_sheet(vulnsheet, vulnsheet.max_row + 2 , 1, get_table_values("VULNAUDIT.CONCLUSIONS", x), "Vulnerability List")
 
 #create each issue sheet
 issues = get_table_values("SECURITY.FINDINGS.SUMMARY.TABLE", 0)
@@ -99,7 +97,7 @@ for i,row in enumerate(issues[2]):
     sheet.cell(row=7, column=1, value="Affected Device").font = headingfont
     sheet.cell(row=8, column=1, value=section.find("section", {"title": "Affected Device"}).find("listitem").text)
 
-    #check if findings table
+    #check if findings table init -=b
     findings = section.find_all("table")
     if len(findings) > 0:
         write_to_sheet(sheet, sheet.max_row + 2, 1, get_table_values(findings[0].get("ref"), 0), "Findings Table")
@@ -112,12 +110,12 @@ for i,row in enumerate(issues[2]):
 
     sheet.cell(row=sheet.max_row + 2, column=1, value="Recommendation").font = headingfont
     sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("section", {"ref":"RECOMMENDATION"}).text.strip())
-    
+
     fix_column_width(sheet)
 
 
 fix_column_width(mainws)
-fix_column_width(vulnsheet)
+
 wb.save(args.outputfile)
 
 
