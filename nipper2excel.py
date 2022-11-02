@@ -5,6 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Color, PatternFill, Font, Border
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
 from openpyxl.utils import get_column_letter
+import copy
 
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
@@ -92,31 +93,51 @@ for i,row in enumerate(issues[2]):
         print("[!] Truncating '" + title + "' to '" + title2 + "'")
     sheet = wb.create_sheet(title2)
 
-    sheet.cell(row=1, column=1, value="Title").font = headingfont
-    sheet.cell(row=2, column=1, value=title)
+    sheet.cell(row=sheet.max_row + 1, column=1, value="Title").font = headingfont
+    sheet.cell(row=sheet.max_row + 1, column=1, value=title)
 
     section = soup.find("section", {"title": title})
 
-    sheet.cell(row=4, column=1, value="Overall").font = headingfont
-    sheet.cell(row=5, column=1, value=section.find("rating").text.strip())
+    findingssection = section.find("section")
 
+    #FINDINGS
+    findingssection_copy = copy.copy(findingssection) #create copy to extract from
+    findingstables_copy = findingssection_copy.find_all("table")
+    for table in findingstables_copy:
+         table.extract()
+    print(findingssection_copy.text.strip())
+    sheet.cell(row=sheet.max_row + 2, column=1, value="Findings").font = headingfont
+    sheet.cell(row=sheet.max_row + 1, column=1, value=findingssection_copy.text.strip())
+
+    #OVERALL
+    sheet.cell(row=sheet.max_row + 2, column=1, value="Overall").font = headingfont
+    sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("rating").text.strip())
+
+    #DEVICES
     if numdevices > 0:
-        sheet.cell(row=7, column=1, value="Affected Device").font = headingfont
-        sheet.cell(row=8, column=1, value=section.find("section", {"title": "Affected Device"}).find("listitem").text)
+        sheet.cell(row=sheet.max_row + 2, column=1, value="Affected Device").font = headingfont
+        sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("section", {"title": "Affected Device"}).find("listitem").text)
 
-    #check if findings table init -=b
-    findings = section.find_all("table")
-    if len(findings) > 0:
-        write_to_sheet(sheet, sheet.max_row + 2, 1, get_table_values(findings[0].get("ref"), 0), "Findings Table")
-    
+    #IMPACT
     sheet.cell(row=sheet.max_row + 2, column=1, value="Impact").font = headingfont
     sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("section", {"ref":"IMPACT"}).text.strip())
 
+    #EASE
     sheet.cell(row=sheet.max_row + 2, column=1, value="Ease").font = headingfont
     sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("section", {"ref":"EASE"}).text.strip())
 
+    #RECOMMENDATION
     sheet.cell(row=sheet.max_row + 2, column=1, value="Recommendation").font = headingfont
     sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("section", {"ref":"RECOMMENDATION"}).text.strip())
+
+    #FINDINGS TABLES
+    #check if findings table exists
+    findingstables = findingssection.find_all("table")
+    #if len(findings) > 0:
+    for table in findingstables:
+        write_to_sheet(sheet, sheet.max_row + 2, 1, get_table_values(table.get("ref"), 0), "Table - " + table.get("title"))
+    
+
 
     fix_column_width(sheet)
 
