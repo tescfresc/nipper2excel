@@ -59,14 +59,16 @@ def write_to_sheet(sheet, startingrow, startingcolumn, tabledata, title):
         for j,cell in enumerate(tablecells):
             sheet.cell(row=currow, column=(j + startingcolumn), value=cell.text)
 
-#create main sheet
+#get number of devices, nipper doesn't include a per device issue table or the affected device name on issues if only one device exists
+numdevices = len(soup.find_all("table", {"ref":"SECURITY.SUMMARY.AUDITDEVICELIST"}))
 
 #devices table
 write_to_sheet(mainws, mainws.max_row , 1, get_table_values("SCOPE.AUDITDEVICELIST.TABLE", 0), "Devices")
 #risk profile
 write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("SECURITY.SUMMARY.SECURITYAUDIT.RISKPROFILE", 0), "Risk Profile")
 #summary each device
-write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("SECURITY.SUMMARY.AUDITDEVICELIST", 0), "Summary of findings for each device")
+if numdevices > 0:
+    write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("SECURITY.SUMMARY.AUDITDEVICELIST", 0), "Summary of findings for each device")
 #vulnerability audit each device
 if len(soup.find_all("table", {"ref":"VULN.SUMMARY.AUDITRESULTLIST"})) > 0:
     write_to_sheet(mainws, mainws.max_row + 2 , 1, get_table_values("VULN.SUMMARY.AUDITRESULTLIST", 0), "Summary of findings from the Vulnerability Audit for each device")
@@ -84,7 +86,11 @@ for i,row in enumerate(issues[2]):
     items = row.find_all("item")
 
     title = items[1].text
-    sheet = wb.create_sheet(title[:30])
+    title2 = str(i + 1) + " - " + title
+    if(len(title2) > 31):
+        title2 = title2[:31]
+        print("[!] Truncating '" + title + "' to '" + title2 + "'")
+    sheet = wb.create_sheet(title2)
 
     sheet.cell(row=1, column=1, value="Title").font = headingfont
     sheet.cell(row=2, column=1, value=title)
@@ -94,8 +100,9 @@ for i,row in enumerate(issues[2]):
     sheet.cell(row=4, column=1, value="Overall").font = headingfont
     sheet.cell(row=5, column=1, value=section.find("rating").text.strip())
 
-    sheet.cell(row=7, column=1, value="Affected Device").font = headingfont
-    sheet.cell(row=8, column=1, value=section.find("section", {"title": "Affected Device"}).find("listitem").text)
+    if numdevices > 0:
+        sheet.cell(row=7, column=1, value="Affected Device").font = headingfont
+        sheet.cell(row=8, column=1, value=section.find("section", {"title": "Affected Device"}).find("listitem").text)
 
     #check if findings table init -=b
     findings = section.find_all("table")
