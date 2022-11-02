@@ -87,6 +87,7 @@ for i,row in enumerate(issues[2]):
     items = row.find_all("item")
 
     title = items[1].text
+    print("[!] Generating sheet for issue: " + title)
     title2 = str(i + 1) + " - " + title
     if(len(title2) > 31):
         title2 = title2[:31]
@@ -105,7 +106,6 @@ for i,row in enumerate(issues[2]):
     findingstables_copy = findingssection_copy.find_all("table")
     for table in findingstables_copy:
          table.extract()
-    print(findingssection_copy.text.strip())
     sheet.cell(row=sheet.max_row + 2, column=1, value="Findings").font = headingfont
     sheet.cell(row=sheet.max_row + 1, column=1, value=findingssection_copy.text.strip())
 
