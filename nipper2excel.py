@@ -6,6 +6,7 @@ from openpyxl.styles import Color, PatternFill, Font, Border
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
 from openpyxl.utils import get_column_letter
 import copy
+import sys
 
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
@@ -15,6 +16,12 @@ parser = ArgumentParser()
 parser.add_argument("-f", "--file", dest="inputfile", help="Input Nipper report XML")
 parser.add_argument("-o", "--output", dest="outputfile", help="Output file")
 args = parser.parse_args()
+def usage():
+    print("[*] Nipper2Excel syntax:\n    Run the firewall config through Nipper and save the report (File/Save) as XML, then use\n    python nipper2excel.py -f=<nipper-report-export.xml> -o=<device-ID.xlsx>\n")
+if args.inputfile==None or args.outputfile==None:
+        print("\n[!] Too few arguments provided.")
+        usage()
+        sys.exit()
 
 #open input with bs4
 ifile = open(args.inputfile, "r", encoding="utf-8")
