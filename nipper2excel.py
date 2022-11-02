@@ -99,6 +99,11 @@ for i,row in enumerate(issues[2]):
 
     section = soup.find("section", {"title": title})
 
+    #remove affected devices section as it was causing issues
+    badsections = section.find_all("section", {"title" : "Affected Device"})
+    for badsection in badsections:
+        badsection.extract()
+
     findingssection = section.find("section")
 
     #FINDINGS
@@ -114,9 +119,10 @@ for i,row in enumerate(issues[2]):
     sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("rating").text.strip())
 
     #DEVICES
-    if numdevices > 0:
-        sheet.cell(row=sheet.max_row + 2, column=1, value="Affected Device").font = headingfont
-        sheet.cell(row=sheet.max_row + 1, column=1, value=section.find("section", {"title": "Affected Device"}).find("listitem").text)
+    
+    sheet.cell(row=sheet.max_row + 2, column=1, value="Affected Devices").font = headingfont
+    for device in section.find_all("device"):
+        sheet.cell(row=sheet.max_row + 1, column=1, value=device.get("name").strip()) 
 
     #IMPACT
     sheet.cell(row=sheet.max_row + 2, column=1, value="Impact").font = headingfont
@@ -145,7 +151,6 @@ for i,row in enumerate(issues[2]):
 fix_column_width(mainws)
 
 wb.save(args.outputfile)
-
 
 
 
