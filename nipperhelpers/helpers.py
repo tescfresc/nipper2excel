@@ -1,4 +1,4 @@
-from helpers import settings
+from nipperhelpers import settings
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
 from openpyxl.utils import get_column_letter
 
